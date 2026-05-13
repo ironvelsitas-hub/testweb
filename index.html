@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>KIOS IRON - Sistem Kasir Terintegrasi</title>
+  
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffaa44">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KIOS IRON">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+  <!-- LOGIN PAGE -->
+  <div id="loginContainer" class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>🛒 KIOS IRON</h1>
+        <p>Login untuk melanjutkan</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <div class="login-input-group">
+          <label>Username</label>
+          <input type="text" id="loginUsername" placeholder="Masukkan username" autocomplete="off">
+        </div>
+        <div class="login-input-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Masukkan password">
+        </div>
+        <div id="loginError" class="login-error"></div>
+        <button type="button" id="loginBtn" class="login-btn">Login</button>
+      </form>
+      <div class="login-footer">
+        <p>Demo Account:</p>
+        <div class="demo-accounts">
+          <span><strong>Admin:</strong> admin / admin123</span>
+          <span><strong>Kasir:</strong> kasir1 / kasir123</span>
+          <span><strong>Gudang:</strong> gudang1 / gudang123</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <div id="mainContainer" class="container" style="display: none;">
+    <header>
+      <div class="header-top">
+        <div class="logo-section">
+          <h1>🛒 KIOS IRON</h1>
+          <p class="tagline">Sistem Barcode, Member & Rewards</p>
+        </div>
+        <div class="header-actions">
+          <!-- User Info & Logout -->
+          <div class="user-info">
+            <span id="userInfo" class="user-name"></span>
+            <button id="logoutBtn" class="logout-btn" style="display: none;">🚪 Logout</button>
+          </div>
+          <!-- Tombol Pengaturan Perangkat -->
+          <button id="deviceSettingsBtn" class="device-settings-btn">
+            🔌 Perangkat
+          </button>
+          <!-- Theme Toggle Button -->
+          <div class="theme-toggle">
+            <button id="themeToggleBtn" class="theme-btn">
+              <span class="theme-icon">🌙</span>
+              <span class="theme-text">Dark Mode</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MODAL PENGATURAN PERANGKAT -->
+    <div id="deviceModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>🔌 Pengaturan Perangkat Kasir</h2>
+          <span class="close-device-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <!-- Status Koneksi -->
+          <div class="device-status">
+            <h3>📊 Status Koneksi</h3>
+            <div class="status-grid">
+              <div class="status-item">
+                <span class="status-label">🖨️ Printer Thermal:</span>
+                <span id="printerStatus" class="status-badge disconnected">Terputus</span>
+                <button id="connectPrinterBtn" class="connect-btn">Hubungkan</button>
+              </div>
+              <div class="status-item">
+                <span class="status-label">📷 Scanner Barcode:</span>
+                <span id="scannerStatus" class="status-badge disconnected">Terputus</span>
+                <button id="connectScannerBtn" class="connect-btn">Hubungkan</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pengaturan Printer Thermal -->
+          <div class="printer-settings">
+            <h3>🖨️ Pengaturan Printer Thermal</h3>
+            <div class="setting-group">
+              <label>Jenis Printer:</label>
+              <select id="printerType">
+                <option value="escpos">ESC/POS (Standar)</option>
+                <option value="star">Star Micronics</option>
+                <option value="epson">Epson TM Series</option>
+              </select>
+            </div>
+            <div class="setting-group">
+              <label>Ukuran Kertas:</label>
+              <select id="paperSize">
+                <option value="58">58mm</option>
+                <option value="80" selected>80mm</option>
+              </select>
+            </div>
+            <div class="setting-group">
+              <label>Potong Kertas Otomatis:</label>
+              <input type="checkbox" id="autoCut" checked>
+            </div>
+            <div class="setting-group">
+              <label>Test Cetak:</label>
+              <button id="testPrintBtn" class="test-btn">🖨️ Cetak Test</button>
+            </div>
+          </div>
+
+          <!-- Pengaturan Scanner Barcode -->
+          <div class="scanner-settings">
+            <h3>📷 Pengaturan Scanner Barcode</h3>
+            <div class="setting-group">
+              <label>Mode Scanner:</label>
+              <select id="scannerMode">
+                <option value="auto">Auto-detect (USB HID)</option>
+                <option value="keyboard">Keyboard Emulation</option>
+                <option value="serial">Serial COM Port</option>
+              </select>
+            </div>
+            <div class="setting-group">
+              <label>Buzzer (Suara Bip):</label>
+              <input type="checkbox" id="scannerBeep" checked>
+            </div>
+          </div>
+
+          <!-- Petunjuk -->
+          <div class="device-help">
+            <h3>📖 Petunjuk</h3>
+            <ul>
+              <li>🔌 Pastikan printer thermal sudah terhubung via USB</li>
+              <li>📷 Scanner barcode USB akan otomatis terdeteksi</li>
+              <li>🖨️ Printer ESC/POS compatible (seperti Epson, Xiaomi, dll)</li>
+              <li>💡 Untuk pertama kali, izinkan akses perangkat di browser</li>
+              <li>🌐 WebUSB hanya tersedia di Chrome, Edge, atau Opera</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveDeviceSettingsBtn" class="confirm-btn">💾 Simpan Pengaturan</button>
+          <button id="closeDeviceBtn" class="cancel-btn">❌ Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGASI TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('products')">📦 Daftar Produk</button>
+      <button class="tab-btn" onclick="showTab('scanner')">📷 Scan Barcode</button>
+      <button class="tab-btn" onclick="showTab('manual')">🔍 Cari Produk</button>
+      <button class="tab-btn" onclick="showTab('members')">👥 Member & Poin</button>
+    </div>
+
+    <!-- TAB 1: Daftar Produk -->
+    <div id="productsTab" class="tab-content active">
+      <div class="form-add">
+        <h3>➕ Tambah Produk Baru</h3>
+        <div class="form-group">
+          <input type="text" id="productName" placeholder="Nama Produk" autocomplete="off">
+          <input type="number" id="productPrice" placeholder="Harga (Rp)" autocomplete="off">
+          <input type="number" id="productStock" placeholder="Stok" autocomplete="off">
+          <button id="addProductBtn">Tambah Produk</button>
+        </div>
+      </div>
+
+      <!-- PRODUCT LIST SECTION -->
+      <div class="product-list">
+        <div class="product-list-header">
+          <h2>📦 Daftar Produk</h2>
+          <button id="printMultipleBtn" class="print-multiple-btn">🖨️ Cetak Barcode Terpilih</button>
+        </div>
+        <div id="productsContainer" class="cards">
+          <div class="loading">Memuat produk...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CETAK BARCODE -->
+    <div id="printBarcodeModal" class="modal">
+      <div class="modal-content modal-small">
+        <div class="modal-header">
+          <h2>🖨️ Cetak Barcode Produk</h2>
+          <span class="close-print-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div id="printProductList" class="print-product-list">
+            <!-- Daftar produk yang dipilih akan muncul di sini -->
+          </div>
+          
+          <div class="print-form-group">
+            <label>Jumlah Copy per Produk:</label>
+            <input type="number" id="printCopies" min="1" max="50" value="1">
+            <small>Setiap produk akan dicetak sebanyak jumlah copy ini</small>
+          </div>
+          
+          <div class="print-info">
+            <p>📄 Format cetak: A4 (8 label per halaman)</p>
+            <p>🏷️ Setiap label berisi: Nama Produk, Harga, dan Barcode</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="confirmPrintBtn" class="confirm-btn">🖨️ Cetak Barcode</button>
+          <button id="cancelPrintBtn" class="cancel-btn">❌ Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Scanner Barcode (Kamera) -->
+    <div id="scannerTab" class="tab-content">
+      <div class="scanner-container">
+        <h3>📷 Scan Barcode Produk</h3>
+        <p style="color:var(--text-secondary); margin-bottom:15px;">Arahkan kamera ke barcode produk</p>
+        <div id="reader" style="width:100%; max-width:500px; margin:0 auto;"></div>
+        <div class="scanner-controls">
+          <button id="startScannerBtn" class="scanner-btn">▶️ Mulai Scan</button>
+          <button id="stopScannerBtn" class="scanner-btn stop">⏹️ Stop Scan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Cari Produk + Keranjang -->
+    <div id="manualTab" class="tab-content">
+      <div class="search-cart-layout">
+        <div class="search-section">
+          <h3>🔍 Cari Produk Berdasarkan Nama</h3>
+          <div class="search-group">
+            <input type="text" id="productNameSearch" placeholder="Masukkan nama produk" autocomplete="off">
+            <button id="searchByNameBtn">🔍 Cari</button>
+          </div>
+          <div id="searchResults" class="search-results hidden">
+            <h4>📋 Hasil Pencarian:</h4>
+            <div id="resultsList" class="results-list"></div>
+          </div>
+        </div>
+
+        <div class="cart-section">
+          <div class="cart-header">
+            <h3>🛒 Keranjang Belanja</h3>
+            <button id="clearCartBtn" class="clear-cart-btn">🗑️ Kosongkan</button>
+          </div>
+          <div id="cartItems" class="cart-items">
+            <div class="empty-cart">Keranjang masih kosong</div>
+          </div>
+          <div class="cart-summary">
+            <div class="cart-total">
+              <span>Total Belanja:</span>
+              <span id="cartTotal">Rp 0</span>
+            </div>
+            <!-- Pilihan Member -->
+            <div class="member-select">
+              <label>👥 Member (Optional)</label>
+              <select id="memberSelect">
+                <option value="">Non-Member</option>
+              </select>
+            </div>
+            <button id="checkoutBtn" class="checkout-btn" disabled>💳 Lanjut ke Pembayaran</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Member & Poin -->
+    <div id="membersTab" class="tab-content">
+      <div class="member-dashboard">
+        <!-- Member Info Card -->
+        <div class="member-stats">
+          <div class="stat-card">
+            <h3>👥 Total Member</h3>
+            <p id="totalMembers">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>⭐ Total Poin Terkumpul</h3>
+            <p id="totalPoints">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>🎁 Reward Tersedia</h3>
+            <p id="totalRewards">0</p>
+          </div>
+        </div>
+
+        <!-- Form Registrasi Member Baru -->
+        <div class="member-form">
+          <h3>➕ Registrasi Member Baru</h3>
+          <div class="form-group">
+            <input type="text" id="memberName" placeholder="Nama Lengkap">
+            <input type="text" id="memberPhone" placeholder="No. HP">
+            <input type="email" id="memberEmail" placeholder="Email">
+            <button id="registerMemberBtn">Daftar Member</button>
+          </div>
+        </div>
+
+        <!-- Daftar Member -->
+        <div class="member-list-section">
+          <h3>📋 Daftar Member</h3>
+          <div class="member-search">
+            <input type="text" id="memberSearch" placeholder="Cari member (nama/HP/kode)...">
+            <button id="searchMemberBtn">🔍 Cari</button>
+          </div>
+          <div id="membersList" class="members-list"></div>
+        </div>
+
+        <!-- Reward Section -->
+        <div class="rewards-section">
+          <h3>🎁 Tukar Poin dengan Reward</h3>
+          <div id="rewardsContainer" class="rewards-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EDIT PRODUK -->
+    <div id="editModal" class="modal">
+      <div class="modal-content modal-small">
+        <div class="modal-header">
+          <h2>✏️ Edit Produk</h2>
+          <span class="close-edit-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editProductId">
+          <div class="edit-form-group">
+            <label>Nama Produk</label>
+            <input type="text" id="editProductName">
+          </div>
+          <div class="edit-form-group">
+            <label>Harga (Rp)</label>
+            <input type="number" id="editProductPrice">
+          </div>
+          <div class="edit-form-group">
+            <label>Stok</label>
+            <input type="number" id="editProductStock">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveEditBtn" class="confirm-btn">💾 Simpan</button>
+          <button id="cancelEditBtn" class="cancel-btn">❌ Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DETAIL PESANAN & PEMBAYARAN -->
+    <div id="orderModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>📋 Detail Pesanan</h2>
+          <span class="close-modal">&times;</span>
+        </div>
+        
+        <div class="modal-body">
+          <div class="product-order-detail">
+            <h3>🛍️ Daftar Belanjaan</h3>
+            <div id="orderItemsList"></div>
+            <div class="order-grand-total">
+              <strong>Total Keseluruhan:</strong>
+              <span id="orderTotalAmount">Rp 0</span>
+            </div>
+          </div>
+
+          <!-- Info Member & Poin -->
+          <div id="memberInfoSection" class="member-info-section hidden">
+            <h3>👤 Info Member</h3>
+            <div id="memberDetails"></div>
+            <div class="points-earned">
+              <strong>✨ Poin yang akan didapat:</strong>
+              <span id="pointsToEarn">0</span> poin
+            </div>
+            <!-- Penggunaan poin untuk diskon -->
+            <div class="use-points-section">
+              <label>🎯 Gunakan Poin untuk Diskon:</label>
+              <div class="points-discount">
+                <input type="number" id="usePointsAmount" placeholder="Masukkan jumlah poin" min="0">
+                <button id="applyPointsBtn">Terapkan Diskon</button>
+              </div>
+              <div id="discountInfo" class="discount-info"></div>
+            </div>
+          </div>
+
+          <div class="payment-method">
+            <h3>💳 Metode Pembayaran</h3>
+            <div class="payment-buttons">
+              <button class="payment-btn" data-method="BANK">🏦 BANK</button>
+              <button class="payment-btn" data-method="OVO">📱 OVO</button>
+              <button class="payment-btn" data-method="DANA">💜 DANA</button>
+              <button class="payment-btn" data-method="CASH">💵 CASH</button>
+              <button class="payment-btn" data-method="DEBIT">💳 DEBIT</button>
+            </div>
+            <div id="selectedPayment" class="selected-payment"></div>
+          </div>
+
+          <div id="cashPaymentSection" class="cash-payment-section hidden">
+            <h3>💰 Pembayaran Tunai</h3>
+            <div class="cash-group">
+              <label>Total Harga (Setelah Diskon):</label>
+              <span id="totalPriceDisplay" class="total-price">Rp 0</span>
+            </div>
+            <div class="cash-group">
+              <label>Masukkan Uang:</label>
+              <input type="number" id="cashAmount" placeholder="Masukkan nominal uang">
+            </div>
+            <div class="cash-group">
+              <label>Uang Kembalian:</label>
+              <span id="changeAmount" class="change-amount">Rp 0</span>
+            </div>
+          </div>
+
+          <div id="nonCashSection" class="noncash-section hidden">
+            <div class="payment-info">
+              <p>✅ Total pembayaran (Setelah Diskon): <strong id="nonCashTotal">Rp 0</strong></p>
+              <p>Silakan lanjutkan pembayaran melalui aplikasi pilihan Anda.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="confirmPaymentBtn" class="confirm-btn" disabled>✅ Konfirmasi Pembayaran</button>
+          <button id="cancelOrderBtn" class="cancel-btn">❌ Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="scanner.js"></script>
+  <script src="member.js"></script>
+  <script src="hardware.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // Initialize authentication when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof initAuth === 'function') {
+        initAuth();
+      }
+    });
+  </script>
+
+  <!-- PWA Script untuk Register Service Worker -->
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => {
+            console.log('Service Worker registered:', reg);
+            
+            // Check for updates
+            reg.onupdatefound = () => {
+              const installingWorker = reg.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed') {
+                  if (navigator.serviceWorker.controller) {
+                    console.log('New content available - refresh to update');
+                    showUpdateNotification();
+                  } else {
+                    console.log('Content cached for offline use');
+                  }
+                }
+              };
+            };
+          })
+          .catch((err) => {
+            console.error('Service Worker registration failed:', err);
+          });
+      });
+    }
+    
+    // Push Notification
+    async function subscribeToPush() {
+      if (!('Notification' in window)) {
+        console.log('Browser tidak support notifikasi');
+        return;
+      }
+      
+      if (Notification.permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
+        });
+        console.log('Push subscription:', subscription);
+        // Send subscription to server
+        await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+      }
+    }
+    
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+    
+    // Show notification when app can be installed
+    function showUpdateNotification() {
+      const container = document.querySelector('.container');
+      const updateBanner = document.createElement('div');
+      updateBanner.className = 'update-banner';
+      updateBanner.innerHTML = `
+        <span>🔄 Update tersedia! Refresh untuk versi terbaru.</span>
+        <button onclick="location.reload()">Refresh</button>
+      `;
+      if (container) container.prepend(updateBanner);
+    }
+    
+    // Install prompt handling
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallButton();
+    });
+    
+    function showInstallButton() {
+      const installBtn = document.createElement('button');
+      installBtn.id = 'installPwaBtn';
+      installBtn.className = 'install-pwa-btn';
+      installBtn.innerHTML = '📱 Install Aplikasi';
+      installBtn.onclick = async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            console.log('User accepted install');
+          }
+          deferredPrompt = null;
+          installBtn.remove();
+        }
+      };
+      document.querySelector('.header-actions')?.appendChild(installBtn);
+    }
+  </script>
+</body>
+</html>
